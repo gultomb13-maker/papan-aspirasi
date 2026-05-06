@@ -2,29 +2,19 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class AspirationSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        //
-    \App\Models\Aspiration::create([
-        'user_id' => 1,
-        'category_id' => 1,
-        'title' => 'Perbaikan Sistem KRS',
-        'content' => 'Sistem KRS sering down.',
-    ]);
-
-    \App\Models\Aspiration::create([
-        'user_id' => 1,
-        'category_id' => 2,
-        'title' => 'WiFi Lemah',
-        'content' => 'Internet kampus lambat.',
-    ]);
+        for ($i = 1; $i <= 30; $i++) {
+            \App\Models\Aspiration::create([
+                'user_id' => 1,
+                'category_id' => rand(1, 3),
+                'title' => 'Aspirasi Mahasiswa #' . $i,
+                'content' => 'Ini adalah contoh isi aspirasi ke-' . $i . '. Sistem ini digunakan untuk menampung pendapat mahasiswa secara umum.'
+            ]);
+        }
     }
 }

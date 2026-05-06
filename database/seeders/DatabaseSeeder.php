@@ -27,3 +27,8 @@ class DatabaseSeeder extends Seeder
     ]);
     }
 }
+
+\App\Models\User::factory()->create([
+    'name' => 'Demo User',
+    'email' => 'demo@gmail.com',
+]);
