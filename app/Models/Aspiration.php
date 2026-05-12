@@ -6,29 +6,25 @@ use Illuminate\Database\Eloquent\Model;
 
 class Aspiration extends Model
 {
-    protected $table = 'aspirations';
-
-    protected $primaryKey = 'id_aspiration';
-
     protected $fillable = [
-        'user_id',
-        'category_id',
         'title',
-        'content'
+        'content',
+        'category_id',
+        'user_id',
     ];
 
     public function category()
     {
-        return $this->belongsTo(\App\Models\Category::class, 'category_id');
+        return $this->belongsTo(Category::class);
     }
 
     public function user()
     {
-        return $this->belongsTo(\App\Models\User::class, 'user_id');
+        return $this->belongsTo(User::class);
     }
 
     public function votes()
     {
-        return $this->hasMany(\App\Models\Vote::class, 'id_aspiration');
+        return $this->hasMany(Vote::class, 'id_aspiration', 'id');
     }
 }

@@ -1,24 +1,26 @@
 <?php
 
-use App\Http\Controllers\AspirationController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
-// Halaman Utama (Daftar Aspirasi)
-Route::get('/', [AspirationController::class, 'index'])->name('aspirations.index');
+use App\Http\Controllers\AspirationController;
+use App\Http\Controllers\VoteController;
 
-// Halaman Form Tambah Aspirasi
-Route::get('/aspirations/create', [AspirationController::class, 'create'])->name('aspirations.create');
+Route::resource('aspirations', AspirationController::class);
 
-// Proses Simpan Aspirasi
-Route::post('/aspirations', [AspirationController::class, 'store'])->name('aspirations.store');
+Route::get('/', [AspirationController::class, 'index'])
+    ->name('aspirations.index');
 
-// Route bawaan starter kit (Dashboard & Auth)
-Route::middleware(['auth'])->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
-
-require __DIR__.'/settings.php';
+Route::post('/aspirations/{aspiration}/vote', [VoteController::class, 'toggle'])
+    ->middleware('auth')
+    ->name('aspirations.vote');
 require __DIR__.'/auth.php';

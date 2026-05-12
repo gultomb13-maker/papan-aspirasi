@@ -6,22 +6,18 @@ use Illuminate\Database\Eloquent\Model;
 
 class Vote extends Model
 {
-    protected $table = 'votes';
-
-    protected $primaryKey = 'id_vote';
-
     protected $fillable = [
         'user_id',
-        'id_aspiration'
+        'id_aspiration',
     ];
 
     public function aspiration()
     {
-        return $this->belongsTo(\App\Models\Aspiration::class, 'id_aspiration');
+        return $this->belongsTo(Aspiration::class, 'id_aspiration', 'id');
     }
 
     public function user()
     {
-        return $this->belongsTo(\App\Models\User::class, 'user_id');
+        return $this->belongsTo(User::class);
     }
 }
