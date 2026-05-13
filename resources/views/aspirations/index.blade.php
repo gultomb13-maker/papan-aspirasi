@@ -238,7 +238,7 @@
             placeholder="Cari aspirasi..."
         >
 
-        <select name="category">
+        <select name="category" onchange="this.form.submit()">
             <option value="">Semua Kategori</option>
             @foreach($categories as $category)
                 <option
@@ -249,6 +249,17 @@
                 </option>
             @endforeach
         </select>
+        <select name="sort" onchange="this.form.submit()">
+    <option value="">Terbaru</option>
+
+    <option
+        value="popular"
+        {{ request('sort') == 'popular' ? 'selected' : '' }}
+    >
+        Terpopuler
+    </option>
+</select>
+onchange="this.form.submit()"
 
         <button type="submit" class="btn-search">Cari →</button>
     </form>
@@ -265,7 +276,9 @@
 
             <span class="cat-badge">{{ $aspiration->category->name }}</span>
 
-            <h3>{{ $aspiration->title }}</h3>
+            <a href="{{ route('aspirations.show', $aspiration->id) }}">
+    <h3>{{ $aspiration->title }}</h3>
+</a>
 
             <p class="sticky-content">{{ $aspiration->content }}</p>
 
@@ -273,17 +286,21 @@
                 <span>{{ $aspiration->created_at->diffForHumans() }}</span>
 
                 @auth
-                    <form class="vote-form" action="{{ route('aspirations.vote', $aspiration->id) }}" method="POST">
-                        @csrf
-                        <button type="submit">
-                            👍 {{ $aspiration->votes->count() }} dukungan
-                        </button>
-                    </form>
-                @else
-                    <span class="vote-display">
-                        👍 {{ $aspiration->votes->count() }}
-                    </span>
-                @endauth
+<button
+    class="vote-button"
+    data-id="{{ $aspiration->id }}"
+>
+    👍
+    <span id="vote-count-{{ $aspiration->id }}">
+        {{ $aspiration->votes->count() }}
+    </span>
+    dukungan
+</button>
+@else
+    <span class="vote-display">
+        👍 {{ $aspiration->votes->count() }}
+    </span>
+@endauth
             </div>
         </article>
 
@@ -294,12 +311,51 @@
     @endforelse
 
 </div>
-
+<div class="mt-10">
+    {{ $aspirations->links() }}
+</div>
 {{-- FAB: Tulis Aspirasi (hanya untuk user login) --}}
 @auth
     <a href="{{ route('aspirations.create') }}" class="fab-write">
         ✏️ Tulis Aspirasi
     </a>
 @endauth
+<script>
 
+document.querySelectorAll('.vote-button').forEach(button => {
+
+    button.addEventListener('click', async function () {
+
+        const aspirationId = this.dataset.id;
+
+        try {
+
+            const response = await fetch(`/aspirations/${aspirationId}/vote`, {
+
+                method: 'POST',
+
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                }
+
+            });
+
+            const data = await response.json();
+
+            // Update jumlah vote di UI
+            document.getElementById(`vote-count-${aspirationId}`)
+                .innerText = data.totalVotes;
+
+        } catch (error) {
+
+            console.error('Vote gagal:', error);
+
+        }
+
+    });
+
+});
+
+</script>
 @endsection

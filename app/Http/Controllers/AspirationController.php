@@ -8,29 +8,43 @@ use App\Models\Category;
 use Illuminate\Support\Facades\Auth;
 
 class AspirationController extends Controller
-{
+{           
     // Menampilkan daftar semua aspirasi + dari session
-    public function index(Request $request)
+public function index(Request $request)
 {
-    $query = Aspiration::with('category')->latest();
     $aspirations = Aspiration::with(['category', 'user', 'votes'])
-    ->latest()
-    ->get();
+        ->withCount('votes')
 
-    // SEARCH
-    if ($request->search) {
-        $query->where(function ($q) use ($request) {
-            $q->where('title', 'like', '%' . $request->search . '%')
-              ->orWhere('content', 'like', '%' . $request->search . '%');
-        });
-    }
+        // SEARCH
+        ->when($request->search, function ($query) use ($request) {
+            $query->where(function ($q) use ($request) {
+                $q->where('title', 'like', '%' . $request->search . '%')
+                  ->orWhere('content', 'like', '%' . $request->search . '%');
+            });
+        })
 
-    // FILTER KATEGORI
-    if ($request->category) {
-        $query->where('category_id', $request->category);
-    }
+        // FILTER KATEGORI
+        ->when($request->category, function ($query) use ($request) {
+            $query->where('category_id', $request->category);
+        })
 
-    $aspirations = $query->get();
+        // SORTING
+        ->when(
+            $request->sort == 'popular',
+
+            // TERPOPULER
+            function ($query) {
+                $query->orderBy('votes_count', 'desc');
+            },
+
+            // DEFAULT = TERBARU
+            function ($query) {
+                $query->latest();
+            }
+        )
+
+        ->paginate(6)
+        ->withQueryString();
 
     $categories = Category::all();
 
@@ -65,5 +79,12 @@ public function store(Request $request)
 
     return redirect()->route('aspirations.index')
         ->with('success', 'Aspirasi berhasil dikirim!');
+}
+
+public function show(Aspiration $aspiration)
+{
+    $aspiration->load(['category', 'user', 'votes']);
+
+    return view('aspirations.show', compact('aspiration'));
 }
 }

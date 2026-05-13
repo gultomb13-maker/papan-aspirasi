@@ -9,29 +9,38 @@ use Illuminate\Support\Facades\Auth;
 
 class VoteController extends Controller
 {
-    public function toggle(int $id)
-    {
-        // Cari aspirasi berdasarkan ID
-        $aspiration = Aspiration::findOrFail($id);
+    public function toggle(Aspiration $aspiration)
+{
+    $existingVote = Vote::where('user_id', Auth::id())
+        ->where('id_aspiration', $aspiration->id)
+        ->first();
 
-        // Cek apakah user sudah vote
-        $existingVote = Vote::where('user_id', Auth::id())
-            ->where('id_aspiration', $aspiration->id)
-            ->first();
+    // Jika sudah vote → hapus
+    if ($existingVote) {
 
-        // Jika sudah vote → hapus vote
-        if ($existingVote) {
-            $existingVote->delete();
-        }
+        $existingVote->delete();
 
-        // Jika belum vote → tambah vote
-        else {
-            Vote::create([
-                'user_id' => Auth::id(),
-                'id_aspiration' => $aspiration->id,
-            ]);
-        }
-
-        return redirect()->back();
+        $voted = false;
     }
+
+    // Jika belum vote → tambah
+    else {
+
+        Vote::create([
+            'user_id' => Auth::id(),
+            'id_aspiration' => $aspiration->id,
+        ]);
+
+        $voted = true;
+    }
+
+    // Hitung total vote terbaru
+    $totalVotes = Vote::where('id_aspiration', $aspiration->id)->count();
+
+    return response()->json([
+        'success' => true,
+        'voted' => $voted,
+        'totalVotes' => $totalVotes,
+    ]);
+}
 }
