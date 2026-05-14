@@ -27,4 +27,6 @@ class Aspiration extends Model
     {
         return $this->hasMany(Vote::class, 'id_aspiration', 'id');
     }
+
+    
 }

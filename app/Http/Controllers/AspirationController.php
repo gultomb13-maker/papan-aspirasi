@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Aspiration;
 use App\Models\Category;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Auth;    
 
 class AspirationController extends Controller
 {           
@@ -43,7 +43,7 @@ public function index(Request $request)
             }
         )
 
-        ->paginate(6)
+        ->paginate(9)
         ->withQueryString();
 
     $categories = Category::all();
@@ -83,8 +83,18 @@ public function store(Request $request)
 
 public function show(Aspiration $aspiration)
 {
-    $aspiration->load(['category', 'user', 'votes']);
+    $aspiration->load([
+        'category',
+        'user',
+        'votes',
 
-    return view('aspirations.show', compact('aspiration'));
+    ]);
+
+    
+
+    return view('aspirations.show', [
+        'aspiration' => $aspiration,
+        
+    ]);
 }
 }

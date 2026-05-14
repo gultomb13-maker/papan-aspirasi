@@ -1,284 +1,179 @@
 @extends('layouts.app')
 
 @section('title', 'Papan Aspirasi Kampus')
+@section('fullwidth')@endsection
 
 @push('styles')
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
 <style>
+    /* === TEMA GLOBAL === */
     body {
-        background: #f5efe6 !important;
+        background-color: #e8dcc8 !important;
+        /* Tekstur corkboard: dot grid halus */
+        background-image: radial-gradient(circle, rgba(0,0,0,0.08) 1px, transparent 1px);
+        background-size: 22px 22px;
         font-family: 'Patrick Hand', cursive;
     }
 
-    /* ── HEADER BAR ── */
-    .board-header {
-        background: #2c2c2a;
-        padding: 1rem 1.5rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-bottom: 2rem;
-    }
-    .board-title {
-        font-family: 'Caveat', cursive;
-        font-size: 28px;
-        font-weight: 700;
-        color: #f5efe6;
-        letter-spacing: 0.5px;
-        margin: 0;
-    }
-
-    /* ── SEARCH FORM ── */
-    .search-form {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        align-items: center;
-    }
-    .search-form input[type="text"],
-    .search-form select {
-        font-family: 'Patrick Hand', cursive;
-        font-size: 14px;
-        background: transparent;
-        border: none;
-        border-bottom: 2px solid rgba(245,239,230,0.5);
-        color: #f5efe6;
-        padding: 6px 10px;
-        outline: none;
-        min-width: 140px;
-        transition: border-color 0.2s;
-    }
-    .search-form input[type="text"]::placeholder { color: rgba(245,239,230,0.5); }
-    .search-form input[type="text"]:focus,
-    .search-form select:focus { border-bottom-color: #FAC775; }
-    .search-form select option { background: #2c2c2a; color: #f5efe6; }
-    .btn-search {
-        font-family: 'Caveat', cursive;
-        font-size: 15px;
-        font-weight: 700;
-        background: #FAC775;
-        color: #412402;
-        border: none;
-        padding: 7px 20px;
-        border-radius: 4px;
-        cursor: pointer;
-        letter-spacing: 0.5px;
-        transition: background 0.15s;
-    }
-    .btn-search:hover { background: #EF9F27; }
-
-    /* ── STICKY GRID ── */
+    /* === GRID MASONRY (CSS Columns) === */
     .sticky-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 2rem 1.5rem;
-        padding: 0 1.5rem 3rem;
+        column-count: 3;
+        column-gap: 1.8rem;
+        padding: 2.5rem 2.5rem 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
     }
-    @media (max-width: 900px) {
-        .sticky-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-    @media (max-width: 580px) {
-        .sticky-grid { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 900px) { .sticky-grid { column-count: 2; } }
+    @media (max-width: 580px) { .sticky-grid { column-count: 1; } }
 
-    /* ── STICKY CARD ── */
+    /* === STICKY CARD === */
     .sticky-card {
+        display: inline-block; /* wajib untuk masonry */
+        width: 100%;
+        break-inside: avoid;  /* cegah card terpotong antar kolom */
+        margin-bottom: 2rem;
         position: relative;
-        padding: 1.5rem 1.25rem 1.1rem;
+        padding: 2rem 1.75rem 1.5rem;
         border-radius: 2px;
-        min-height: 210px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
         transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
+
+    /* Variasi rotasi — nth-child agar konsisten tiap page */
+    .sticky-card:nth-child(6n+1) { transform: rotate(-1.5deg); }
+    .sticky-card:nth-child(6n+2) { transform: rotate(1.2deg); }
+    .sticky-card:nth-child(6n+3) { transform: rotate(-0.6deg); }
+    .sticky-card:nth-child(6n+4) { transform: rotate(1.8deg); }
+    .sticky-card:nth-child(6n+5) { transform: rotate(-1deg); }
+    .sticky-card:nth-child(6n+6) { transform: rotate(0.7deg); }
+
     .sticky-card:hover {
-        transform: translateY(-5px) rotate(0deg) !important;
-        box-shadow: 6px 10px 30px rgba(0,0,0,0.2) !important;
+        transform: translateY(-8px) rotate(0deg) !important;
+        box-shadow: 10px 16px 36px rgba(0,0,0,0.2) !important;
+        z-index: 10;
     }
 
-    /* Pin */
+    /* Pin di atas card */
     .sticky-pin {
         position: absolute;
-        top: -11px;
-        left: 50%;
+        top: -12px; left: 50%;
         transform: translateX(-50%);
-        width: 18px;
-        height: 18px;
+        width: 22px; height: 22px;
         border-radius: 50%;
-        background: radial-gradient(circle at 35% 35%, #ffffff 20%, #aaaaaa 100%);
+        background: radial-gradient(circle at 35% 35%, #fff 20%, #aaa 100%);
         border: 2px solid rgba(0,0,0,0.15);
+        box-shadow: 0 3px 6px rgba(0,0,0,0.15);
         z-index: 2;
     }
 
-    /* Category badge */
+    /* === TEKS DALAM CARD === */
     .cat-badge {
         font-family: 'Caveat', cursive;
-        font-size: 12px;
-        font-weight: 700;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-        opacity: 0.65;
+        font-size: 13px; font-weight: 700;
+        letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.65;
     }
-
-    /* Title */
     .sticky-card h3 {
         font-family: 'Caveat', cursive;
-        font-size: 21px;
-        font-weight: 700;
-        line-height: 1.25;
-        margin: 0;
+        font-size: 25px; font-weight: 700;
+        line-height: 1.3; margin: 4px 0 10px; color: inherit;
     }
-
-    /* Content */
-    .sticky-card .sticky-content {
-        font-size: 14px;
-        line-height: 1.6;
-        flex: 1;
-        margin: 0;
+    .sticky-card a { text-decoration: none; color: inherit; }
+    .sticky-content {
+        font-size: 15px; line-height: 1.65; margin: 0;
         display: -webkit-box;
         -webkit-line-clamp: 5;
-        line-clamp: 5;
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
 
-    /* Footer */
+    /* Footer card: waktu + vote */
     .sticky-footer {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        font-size: 12px;
-        margin-top: 6px;
-        opacity: 0.65;
+        display: flex; align-items: center; justify-content: space-between;
+        font-size: 13px; margin-top: 1.4rem; padding-top: 10px;
+        border-top: 1px dashed rgba(0,0,0,0.12); opacity: 0.8;
     }
 
-    /* Vote button */
-    .vote-form button,
-    .vote-display {
-        font-family: 'Caveat', cursive;
-        font-size: 14px;
-        font-weight: 700;
-        background: rgba(0,0,0,0.08);
-        border: none;
-        border-radius: 20px;
-        padding: 4px 14px;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        transition: background 0.15s;
-        color: inherit;
+    /* Tombol vote (AJAX) & display vote */
+    .vote-button, .vote-display {
+        font-family: 'Caveat', cursive; font-size: 15px; font-weight: 700;
+        background: rgba(0,0,0,0.08); border: none; border-radius: 20px;
+        padding: 5px 14px; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 5px;
+        transition: background 0.15s; color: inherit;
     }
-    .vote-form button:hover { background: rgba(0,0,0,0.16); }
+    .vote-button:hover { background: rgba(0,0,0,0.16); }
     .vote-display { cursor: default; }
 
-    /* ── COLOUR VARIANTS (6 cycling colours) ── */
-    .color-1 { background: #FFF3A3; color: #2C2C2A; box-shadow: 3px 6px 20px rgba(0,0,0,0.13); transform: rotate(-1.5deg); }
-    .color-2 { background: #FFB3BA; color: #4B1528; box-shadow: 3px 6px 20px rgba(0,0,0,0.13); transform: rotate(1deg); }
-    .color-3 { background: #B5EAD7; color: #04342C; box-shadow: 3px 6px 20px rgba(0,0,0,0.13); transform: rotate(-0.8deg); }
-    .color-4 { background: #C7CEEA; color: #26215C; box-shadow: 3px 6px 20px rgba(0,0,0,0.13); transform: rotate(1.5deg); }
-    .color-5 { background: #FFDAC1; color: #4A1B0C; box-shadow: 3px 6px 20px rgba(0,0,0,0.13); transform: rotate(-1deg); }
-    .color-6 { background: #E2F0CB; color: #173404; box-shadow: 3px 6px 20px rgba(0,0,0,0.13); transform: rotate(0.7deg); }
+    /* === WARNA CARD (6 varian) === */
+    .color-1 { background: #FFF3A3; color: #2C2C2A; box-shadow: 4px 6px 20px rgba(0,0,0,0.1); }
+    .color-2 { background: #FFB3BA; color: #4B1528; box-shadow: 4px 6px 20px rgba(0,0,0,0.1); }
+    .color-3 { background: #B5EAD7; color: #04342C; box-shadow: 4px 6px 20px rgba(0,0,0,0.1); }
+    .color-4 { background: #C7CEEA; color: #26215C; box-shadow: 4px 6px 20px rgba(0,0,0,0.1); }
+    .color-5 { background: #FFDAC1; color: #4A1B0C; box-shadow: 4px 6px 20px rgba(0,0,0,0.1); }
+    .color-6 { background: #E2F0CB; color: #173404; box-shadow: 4px 6px 20px rgba(0,0,0,0.1); }
 
-    /* ── WRITE BUTTON (FAB) ── */
+
+    /* === FAB TULIS ASPIRASI === */
     .fab-write {
-        position: fixed;
-        bottom: 28px;
-        right: 28px;
-        font-family: 'Caveat', cursive;
-        font-size: 16px;
-        font-weight: 700;
-        background: #2c2c2a;
-        color: #FAC775;
-        border: none;
-        padding: 13px 26px;
-        border-radius: 30px;
-        cursor: pointer;
-        box-shadow: 0 4px 18px rgba(0,0,0,0.28);
-        letter-spacing: 0.5px;
-        text-decoration: none;
-        display: inline-block;
-        transition: transform 0.15s, box-shadow 0.15s;
-        z-index: 50;
+        position: fixed; bottom: 30px; right: 30px; z-index: 50;
+        font-family: 'Caveat', cursive; font-size: 18px; font-weight: 700;
+        background: #2c2c2a; color: #FAC775;
+        border: 2px solid rgba(250,199,117,0.3);
+        padding: 13px 26px; border-radius: 40px;
+        text-decoration: none; display: inline-flex; align-items: center; gap: 7px;
+        box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+        transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
     }
     .fab-write:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 22px rgba(0,0,0,0.32);
-        color: #FAC775;
-        text-decoration: none;
+        transform: translateY(-4px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3), 0 0 0 6px rgba(250,199,117,0.1);
+        border-color: rgba(250,199,117,0.55);
+        color: #FAC775; text-decoration: none;
     }
 
-    /* ── EMPTY STATE ── */
+    /* === PAGINATION === */
+.pagination-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin: 2rem 0 4rem;
+    flex-wrap: wrap;
+    padding-bottom: 5rem;
+}
+
+.pagination-info {
+    font-family: 'Caveat', cursive;
+    font-size: 18px;
+    color: #4b463f;
+}
+
+.pagination-wrapper nav {
+    display: flex;
+    align-items: center;
+}
+
+    /* === EMPTY STATE === */
     .empty-state {
-        grid-column: 1 / -1;
-        text-align: center;
-        padding: 4rem 1rem;
-        font-family: 'Caveat', cursive;
-        font-size: 22px;
-        color: #888780;
+        text-align: center; padding: 6rem 1rem;
+        font-family: 'Caveat', cursive; font-size: 26px; color: #7a7060;
     }
 </style>
 @endpush
 
 @section('content')
 
-{{-- HEADER --}}
-<div class="board-header">
-    <span class="board-title">📌 Papan Aspirasi Kampus</span>
-
-    <form method="GET" action="{{ route('aspirations.index') }}" class="search-form">
-        <input
-            type="text"
-            name="search"
-            value="{{ request('search') }}"
-            placeholder="Cari aspirasi..."
-        >
-
-        <select name="category" onchange="this.form.submit()">
-            <option value="">Semua Kategori</option>
-            @foreach($categories as $category)
-                <option
-                    value="{{ $category->id }}"
-                    {{ request('category') == $category->id ? 'selected' : '' }}
-                >
-                    {{ $category->name }}
-                </option>
-            @endforeach
-        </select>
-        <select name="sort" onchange="this.form.submit()">
-    <option value="">Terbaru</option>
-
-    <option
-        value="popular"
-        {{ request('sort') == 'popular' ? 'selected' : '' }}
-    >
-        Terpopuler
-    </option>
-</select>
-onchange="this.form.submit()"
-
-        <button type="submit" class="btn-search">Cari →</button>
-    </form>
-</div>
-
-{{-- STICKY GRID --}}
+{{-- Masonry grid sticky notes --}}
 <div class="sticky-grid">
-
     @forelse ($aspirations as $index => $aspiration)
         @php $colorClass = 'color-' . (($index % 6) + 1); @endphp
 
         <article class="sticky-card {{ $colorClass }}">
             <div class="sticky-pin"></div>
-
             <span class="cat-badge">{{ $aspiration->category->name }}</span>
 
             <a href="{{ route('aspirations.show', $aspiration->id) }}">
-    <h3>{{ $aspiration->title }}</h3>
-</a>
+                <h3>{{ $aspiration->title }}</h3>
+            </a>
 
             <p class="sticky-content">{{ $aspiration->content }}</p>
 
@@ -286,76 +181,53 @@ onchange="this.form.submit()"
                 <span>{{ $aspiration->created_at->diffForHumans() }}</span>
 
                 @auth
-<button
-    class="vote-button"
-    data-id="{{ $aspiration->id }}"
->
-    👍
-    <span id="vote-count-{{ $aspiration->id }}">
-        {{ $aspiration->votes->count() }}
-    </span>
-    dukungan
-</button>
-@else
-    <span class="vote-display">
-        👍 {{ $aspiration->votes->count() }}
-    </span>
-@endauth
+                    {{-- Tombol vote — dikirim via AJAX, lihat script di bawah --}}
+                    <button class="vote-button" data-id="{{ $aspiration->id }}">
+                        👍 <span id="vote-count-{{ $aspiration->id }}">{{ $aspiration->votes->count() }}</span> dukungan
+                    </button>
+                @else
+                    <span class="vote-display">👍 {{ $aspiration->votes->count() }}</span>
+                @endauth
             </div>
         </article>
 
     @empty
-        <div class="empty-state">
-            ✏️ Belum ada aspirasi. Jadilah yang pertama!
-        </div>
+        <div class="empty-state">✏️ Belum ada aspirasi!</div>
     @endforelse
-
 </div>
-<div class="mt-10">
+
+<div class="pagination-wrapper">
+
+    <div class="pagination-info">
+        Showing {{ $aspirations->firstItem() }}
+        to {{ $aspirations->lastItem() }}
+        of {{ $aspirations->total() }}
+    </div>
+
     {{ $aspirations->links() }}
+
 </div>
-{{-- FAB: Tulis Aspirasi (hanya untuk user login) --}}
+
+{{-- FAB: hanya muncul saat login --}}
 @auth
-    <a href="{{ route('aspirations.create') }}" class="fab-write">
-        ✏️ Tulis Aspirasi
-    </a>
+    <a href="{{ route('aspirations.create') }}" class="fab-write">✏️ Tulis Aspirasi</a>
 @endauth
+
 <script>
-
-document.querySelectorAll('.vote-button').forEach(button => {
-
-    button.addEventListener('click', async function () {
-
-        const aspirationId = this.dataset.id;
-
+// === AJAX Vote ===
+document.querySelectorAll('.vote-button').forEach(btn => {
+    btn.addEventListener('click', async function () {
         try {
-
-            const response = await fetch(`/aspirations/${aspirationId}/vote`, {
-
+            const res = await fetch(`/aspirations/${this.dataset.id}/vote`, {
                 method: 'POST',
-
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json',
-                }
-
+                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
             });
-
-            const data = await response.json();
-
-            // Update jumlah vote di UI
-            document.getElementById(`vote-count-${aspirationId}`)
-                .innerText = data.totalVotes;
-
-        } catch (error) {
-
-            console.error('Vote gagal:', error);
-
-        }
-
+            const data = await res.json();
+            document.getElementById(`vote-count-${this.dataset.id}`).innerText = data.totalVotes;
+        } catch (e) { console.error('Vote gagal:', e); }
     });
-
 });
 
 </script>
+
 @endsection
